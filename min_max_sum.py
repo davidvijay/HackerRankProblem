@@ -12,4 +12,4 @@ for i in range(0, len(arr)):
         else:
             sum_val+=arr[j]
     result.append(sum_val)       
-print(min(result), max(result) )
+print(min(result), max(result))
