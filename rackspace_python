@@ -1,0 +1,64 @@
+import requests
+import os
+
+# Authentication endpoint and credentials
+auth_url = 'https://identity.api.rackspacecloud.com/v2.0/tokens'
+username = ''
+api_key = ''
+
+# Request body
+data = {
+    "auth": {
+        "RAX-KSKEY:apiKeyCredentials": {
+            "username": username,
+            "apiKey": api_key
+        }
+    }
+}
+
+# Headers
+headers = {
+    "Content-Type": "application/json"
+}
+
+try:
+    # Make the POST request to authenticate
+    response = requests.post(auth_url, json=data, headers=headers)
+
+    # Check if the authentication request was successful
+    if response.status_code == 200:
+        print("Authentication successful!")
+
+        # Extract token and storage URL from the authentication response
+        auth_data = response.json()['access']
+        token = auth_data['token']['id']
+        storage_url =auth_data["serviceCatalog"][1]["endpoints"][0]["publicURL"]
+
+        # Upload file to the container
+        container_name = 'testing'
+        file_path = '/home/ferack12/client_delivery_management/Bondpdf/test_documents/' # Path to the file you want to upload
+        files= os.listdir(file_path)  # Accessing files
+        
+        for file in files: 
+
+            upload_url = f"{storage_url}/{container_name}/{file}"
+            with open(file_path+file, 'rb') as file:
+                upload_headers = {
+                    'X-Auth-Token': token,
+                    'Content-Type': 'application/octet-stream'
+                }
+                upload_response = requests.put(upload_url, headers=upload_headers, data=file)
+
+            if upload_response.status_code == 201:
+                print("File uploaded successfully!")
+            else:
+                print(f"Failed to upload file. Status code: {upload_response.status_code}")
+                print(upload_response.text)
+
+    else:
+        print("Authentication failed. Status code:", response.status_code)
+        print("Response body:", response.text)
+
+except Exception as e:
+    print("An error occurred:", e)
+
